@@ -32,7 +32,7 @@
 
 ### 业务特性
 
-- 业务代码生成器（支持自动生成 Sevice、Controller、数据模型代码）
+- 业务代码生成器（支持自动生成 Service、Controller、数据模型代码）
 - Spring Session Redis 分布式登录
 - 全局请求响应拦截器（记录日志）
 - 全局异常处理器
@@ -77,7 +77,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
+    url: jdbc:mysql://localhost:3306/audada
     username: root
     password: 123456
 ```

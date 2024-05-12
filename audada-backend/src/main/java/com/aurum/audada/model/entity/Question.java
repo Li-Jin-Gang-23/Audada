@@ -7,11 +7,11 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 用户
+ * 题目
  */
-@TableName(value = "user")
+@TableName(value = "question")
 @Data
-public class User implements Serializable {
+public class Question implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -23,44 +23,19 @@ public class User implements Serializable {
     private Long id;
 
     /**
-     * 用户账号
+     * 题目内容（json格式）
      */
-    private String userAccount;
+    private String questionContent;
 
     /**
-     * 用户密码
+     * 应用 id
      */
-    private String userPassword;
+    private Long appId;
 
     /**
-     * 开放平台id
+     * 创建用户 id
      */
-    private String unionId;
-
-    /**
-     * 公众号openId
-     */
-    private String mpOpenId;
-
-    /**
-     * 用户昵称
-     */
-    private String userName;
-
-    /**
-     * 用户头像
-     */
-    private String userAvatar;
-
-    /**
-     * 用户简介
-     */
-    private String userProfile;
-
-    /**
-     * 用户角色：user/admin/ban
-     */
-    private String userRole;
+    private Long userId;
 
     /**
      * 创建时间
