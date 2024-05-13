@@ -1,14 +1,13 @@
 package com.aurum.audada.manager;
 
+import com.aurum.audada.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
-import com.aurum.audada.config.CosClientConfig;
-
-import java.io.File;
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.io.File;
 
 /**
  * Cos 对象存储操作
@@ -30,8 +29,7 @@ public class CosManager {
      * @return
      */
     public PutObjectResult putObject(String key, String localFilePath) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
-                new File(localFilePath));
+        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, new File(localFilePath));
         return cosClient.putObject(putObjectRequest);
     }
 
@@ -43,8 +41,7 @@ public class CosManager {
      * @return
      */
     public PutObjectResult putObject(String key, File file) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
-                file);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
         return cosClient.putObject(putObjectRequest);
     }
 }

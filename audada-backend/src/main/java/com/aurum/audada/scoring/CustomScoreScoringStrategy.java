@@ -1,0 +1,79 @@
+package com.aurum.audada.scoring;
+
+import cn.hutool.json.JSONUtil;
+import com.aurum.audada.model.dto.question.QuestionContentDTO;
+import com.aurum.audada.model.entity.App;
+import com.aurum.audada.model.entity.Question;
+import com.aurum.audada.model.entity.ScoringResult;
+import com.aurum.audada.model.entity.UserAnswer;
+import com.aurum.audada.model.vo.QuestionVO;
+import com.aurum.audada.service.QuestionService;
+import com.aurum.audada.service.ScoringResultService;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * + 自定义得分类应用评分策略
+ * +
+ * + @Author Li_Jin_Gang
+ * + @Date 2024/5/12 0012 13:41
+ */
+
+@ScoringStrategyConfig(appType = 0, scoringStrategy = 0)
+public class CustomScoreScoringStrategy implements ScoringStrategy {
+
+    @Resource
+    private QuestionService questionService;
+
+    @Resource
+    private ScoringResultService scoringResultService;
+
+    @Override
+    public UserAnswer doScore(List<String> choices, App app) throws Exception {
+        Long appId = app.getId();
+        // 1. 根据 id 查询到题目和题目结果信息（按分数降序排序）
+        Question question = questionService.getOne(Wrappers.lambdaQuery(Question.class).eq(Question::getAppId, appId));
+        List<ScoringResult> scoringResultList = scoringResultService.list(Wrappers.lambdaQuery(ScoringResult.class).eq(ScoringResult::getAppId, appId).orderByDesc(ScoringResult::getResultScoreRange));
+        // 2. 遍历题目结果信息，计算总得分
+        int totalScore = 0;
+        QuestionVO questionVO = QuestionVO.objToVo(question);
+        List<QuestionContentDTO> questionContent = questionVO.getQuestionContent();
+        // 遍历题目列表
+        for (QuestionContentDTO questionContentDTO : questionContent) {
+            // 遍历答案列表
+            for (String answer : choices) {
+                // 遍历题目选项
+                for (QuestionContentDTO.Option option : questionContentDTO.getOptions()) {
+                    // 判断用户选择的答案是否与题目选项相等
+                    if (option.getKey().equals(answer)) {
+                        int score = Optional.of(option.getScore()).orElse(0);
+                        totalScore += score;
+                    }
+                }
+            }
+        }
+        // 3. 遍历得分结果，找到第一个用户分数大于得分范围的结果，作为最终结果
+        ScoringResult maxScoringResult = scoringResultList.get(0);
+        for (ScoringResult scoringResult : scoringResultList) {
+            if (totalScore >= scoringResult.getResultScoreRange()) {
+                maxScoringResult = scoringResult;
+                break;
+            }
+        }
+        // 4. 构造返回值，填充答案对象的属性
+        UserAnswer userAnswer = new UserAnswer();
+        userAnswer.setAppId(appId);
+        userAnswer.setAppType(app.getAppType());
+        userAnswer.setScoringStrategy(app.getScoringStrategy());
+        userAnswer.setChoices(JSONUtil.toJsonStr(choices));
+        userAnswer.setResultId(maxScoringResult.getId());
+        userAnswer.setResultName(maxScoringResult.getResultName());
+        userAnswer.setResultDesc(maxScoringResult.getResultDesc());
+        userAnswer.setResultPicture(maxScoringResult.getResultPicture());
+        userAnswer.setResultScore(totalScore);
+        return null;
+    }
+}
