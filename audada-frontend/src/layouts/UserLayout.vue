@@ -1,9 +1,9 @@
 <template>
   <div id="userLayout">
-    <a-layout style="min-height: 100vh">
+    <a-layout style="height: 100vh">
       <a-layout-header class="header">
         <a-space>
-          <img src="../assets/logo.png" class="logo" />
+          <img class="logo" src="../assets/logo.png" />
           <div>Au答答 AI 答题应用平台</div>
         </a-space>
       </a-layout-header>
@@ -41,12 +41,9 @@
   padding: 20px;
 }
 
-#userLayout .footer {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+.footer {
   padding: 16px;
   text-align: center;
+  background: #efefef;
 }
 </style>

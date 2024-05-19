@@ -11,6 +11,10 @@ export const useLoginUserStore = defineStore("loginUser", () => {
     userName: "未登录",
   });
 
+  function setLoginUser(newLoginUser: API.LoginUserVO) {
+    loginUser.value = newLoginUser;
+  }
+
   async function fetchLoginUser() {
     const res = await getLoginUserUsingGet();
     if (res.data.code === 0 && res.data.data) {
@@ -18,10 +22,6 @@ export const useLoginUserStore = defineStore("loginUser", () => {
     } else {
       loginUser.value = { userRole: ACCESS_ENUM.NOT_LOGIN };
     }
-  }
-
-  function setLoginUser(newLoginUser: API.LoginUserVO) {
-    loginUser.value = newLoginUser;
   }
 
   return { loginUser, setLoginUser, fetchLoginUser };

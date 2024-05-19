@@ -1,10 +1,12 @@
 <template>
   <div id="basicLayout">
-    <a-layout style="min-height: 100vh">
+    <a-layout style="height: 100vh">
       <a-layout-header class="header">
         <GlobalHeader />
       </a-layout-header>
-      <a-layout-content class="content"> </a-layout-content>
+      <a-layout-content class="content">
+        <router-view />
+      </a-layout-content>
       <a-layout-footer class="footer">
         <a href="https://github.com/Li-Jin-Gang-23" target="_blank">
           作者: Aurum
@@ -33,12 +35,9 @@ import GlobalHeader from "@/components/GlobalHeader.vue";
   background: linear-gradient(to right, #fefefe, #fff);
 }
 
-#basicLayout .footer {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+.footer {
   padding: 16px;
   text-align: center;
+  background: #efefef;
 }
 </style>

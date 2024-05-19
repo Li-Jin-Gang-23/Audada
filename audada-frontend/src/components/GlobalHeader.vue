@@ -11,13 +11,13 @@
           :style="{ padding: 0, marginRight: '38px' }"
           disabled
         >
-          <div class="title-bar">
+          <div class="titleBar">
             <img class="logo" src="../assets/logo.png" />
             <div class="title">Au答答</div>
           </div>
         </a-menu-item>
-        <a-menu-item v-for="item in visibleRoutes" :key="item.path"
-          >{{ item.name }}
+        <a-menu-item v-for="item in visibleRoutes" :key="item.path">
+          {{ item.name }}
         </a-menu-item>
       </a-menu>
     </a-col>
@@ -25,7 +25,7 @@
       <div v-if="loginUserStore.loginUser.id">
         {{ loginUserStore.loginUser.userName ?? "匿名用户" }}
       </div>
-      <div>
+      <div v-else>
         <a-button type="primary" href="/user/login">登录</a-button>
       </div>
     </a-col>
@@ -40,19 +40,18 @@ import { useLoginUserStore } from "@/store/userStore";
 import checkAccess from "@/access/checkAccess";
 
 const loginUserStore = useLoginUserStore();
-const router = useRouter();
 
-// Tab 栏选中菜单项
+const router = useRouter();
+// 当前选中的菜单项
 const selectedKeys = ref(["/"]);
-// 路由跳转后，更新选中的菜单项
-router.afterEach((to, from, failure) => {
+// 路由跳转时，自动更新选中的菜单项
+router.afterEach((to) => {
   selectedKeys.value = [to.path];
 });
 
-// 展示在菜单的路由数组
-// eslint-disable-next-line vue/return-in-computed-property
+// 展示在菜单栏的路由数组
 const visibleRoutes = computed(() => {
-  routes.filter((item) => {
+  return routes.filter((item) => {
     if (item.meta?.hideInMenu) {
       return false;
     }
@@ -64,7 +63,7 @@ const visibleRoutes = computed(() => {
   });
 });
 
-// 点击菜单跳转
+// 点击菜单跳转到对应页面
 const doMenuClick = (key: string) => {
   router.push({
     path: key,
@@ -76,17 +75,17 @@ const doMenuClick = (key: string) => {
 #globalHeader {
 }
 
-#globalHeader .title-bar {
+.titleBar {
   display: flex;
   align-items: center;
 }
 
-#globalHeader .title {
+.title {
   margin-left: 16px;
   color: black;
 }
 
-#globalHeader .logo {
+.logo {
   height: 48px;
 }
 </style>

@@ -4,6 +4,7 @@
     {{ JSON.stringify(loginUserStore.loginUser) }}
   </div>
 </template>
+
 <script setup lang="ts">
 import { useLoginUserStore } from "@/store/userStore";
 
