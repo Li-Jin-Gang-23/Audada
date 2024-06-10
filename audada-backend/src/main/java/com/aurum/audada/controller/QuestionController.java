@@ -9,10 +9,14 @@ import com.aurum.audada.common.ResultUtils;
 import com.aurum.audada.constant.UserConstant;
 import com.aurum.audada.exception.BusinessException;
 import com.aurum.audada.exception.ThrowUtils;
+import com.aurum.audada.manager.AiManager;
 import com.aurum.audada.model.dto.question.*;
+import com.aurum.audada.model.entity.App;
 import com.aurum.audada.model.entity.Question;
 import com.aurum.audada.model.entity.User;
+import com.aurum.audada.model.enums.AppTypeEnum;
 import com.aurum.audada.model.vo.QuestionVO;
+import com.aurum.audada.service.AppService;
 import com.aurum.audada.service.QuestionService;
 import com.aurum.audada.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,6 +28,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static com.aurum.audada.constant.QuestionSystemConstant.GENERATE_QUESTION_SYSTEM_MESSAGE;
+
 /**
  * 题目接口
  */
@@ -34,9 +40,12 @@ public class QuestionController {
 
     @Resource
     private QuestionService questionService;
-
     @Resource
     private UserService userService;
+    @Resource
+    private AppService appService;
+    @Resource
+    private AiManager aiManager;
 
     /**
      * 创建题目
@@ -237,4 +246,34 @@ public class QuestionController {
         return ResultUtils.success(true);
     }
 
+    @PostMapping("/ai_generate")
+    public BaseResponse<List<QuestionContentDTO>> aiGenerateQuestion(@RequestBody AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+        // 获取参数
+        Long appId = aiGenerateQuestionRequest.getAppId();
+        int questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+        int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        // 封装 Prompt
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        // AI 生成
+        String result = aiManager.doSyncUnstableRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage);
+        // 结果处理
+        int start = result.indexOf("[");
+        int end = result.lastIndexOf("]");
+        String json = result.substring(start, end + 1);
+        List<QuestionContentDTO> questionContentDTOList = JSONUtil.toList(json, QuestionContentDTO.class);
+        return ResultUtils.success(questionContentDTOList);
+    }
+
+    private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {
+        StringBuilder userMessage = new StringBuilder();
+        userMessage.append(app.getAppName()).append("\n");
+        userMessage.append(app.getAppDesc()).append("\n");
+        userMessage.append(AppTypeEnum.getEnumByValue(app.getAppType()).getText() + "类").append("\n");
+        userMessage.append(questionNumber).append("\n");
+        userMessage.append(optionNumber);
+        return userMessage.toString();
+    }
 }

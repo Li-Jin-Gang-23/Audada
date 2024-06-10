@@ -35,6 +35,9 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+  jackson:
+    date-format: yy-MM-dd HH:mm:ss # 格式化全局时间字段
+    time-zone: GMT+8 # 指定时间区域类型
 server:
   address: 0.0.0.0
   port: 8101
@@ -72,3 +75,6 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.aurum.audada.controller
+# AI配置
+ai:
+  api-key: efa78463997b81cf54c633cdf9a9015a.tUKQ3KqRnuCDCPIE
