@@ -12,9 +12,16 @@
         {{ appId }}
       </a-form-item>
       <a-form-item label="题目列表" :content-flex="false" :merge-props="false">
-        <a-button @click="addQuestion(questionContent.length)">
-          底部添加题目
-        </a-button>
+        <a-space size="medium">
+          <a-button @click="addQuestion(questionContent.length)">
+            底部添加题目
+          </a-button>
+          <!-- AI 生成题目抽屉 -->
+          <AiGenerateQuestionDrawer
+            :appId="appId"
+            :onSuccess="onAiGenerateSuccess"
+          />
+        </a-space>
         <!-- 遍历每道题目 -->
         <div v-for="(question, index) of questionContent" :key="index">
           <!-- 题目信息展示 -->
@@ -104,6 +111,7 @@ import {
   listQuestionVoByPageUsingPost,
 } from "@/api/questionController";
 import message from "@arco-design/web-vue/es/message";
+import AiGenerateQuestionDrawer from "@/components/AiGenerateQuestionDrawer.vue";
 
 interface Props {
   appId: string;
@@ -192,6 +200,13 @@ const deleteQuestionOption = (
   }
   question.options.splice(index, 1);
 };
+
+// AI 生成题目
+const onAiGenerateSuccess = (result: API.QuestionContentDTO[]) => {
+  questionContent.value = [...questionContent.value, ...result];
+  message.success(`AI 生成题目成功，已新增 ${result.length} 道题目`);
+};
+
 /**
  * 提交
  */
