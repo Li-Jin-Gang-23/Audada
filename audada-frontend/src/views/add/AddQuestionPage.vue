@@ -20,6 +20,9 @@
           <AiGenerateQuestionDrawer
             :appId="appId"
             :onSuccess="onAiGenerateSuccess"
+            :onSSESuccess="onAiGenerateSuccessSSE"
+            :onSSEStatr="onSSEStart"
+            :onSSEClose="onSSEClose"
           />
         </a-space>
         <!-- 遍历每道题目 -->
@@ -205,6 +208,16 @@ const deleteQuestionOption = (
 const onAiGenerateSuccess = (result: API.QuestionContentDTO[]) => {
   questionContent.value = [...questionContent.value, ...result];
   message.success(`AI 生成题目成功，已新增 ${result.length} 道题目`);
+};
+// AI 生成题目 SSE
+const onAiGenerateSuccessSSE = (result: API.QuestionContentDTO) => {
+  questionContent.value = [...questionContent.value, result];
+};
+const onSSEStart = (event: any) => {
+  message.loading("AI 生成题目中，请稍候...");
+};
+const onSSEClose = (event: any) => {
+  message.loading("AI 生成题目完成");
 };
 
 /**
