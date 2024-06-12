@@ -1,5 +1,6 @@
 package com.aurum.audada.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.aurum.audada.annotation.AuthCheck;
 import com.aurum.audada.common.BaseResponse;
@@ -20,13 +21,19 @@ import com.aurum.audada.service.AppService;
 import com.aurum.audada.service.QuestionService;
 import com.aurum.audada.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zhipu.oapi.service.v4.model.ModelData;
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.aurum.audada.constant.QuestionSystemConstant.GENERATE_QUESTION_SYSTEM_MESSAGE;
 
@@ -275,5 +282,60 @@ public class QuestionController {
         userMessage.append(questionNumber).append("\n");
         userMessage.append(optionNumber);
         return userMessage.toString();
+    }
+
+    @GetMapping("/ai_generate/sse")
+    public SseEmitter aiGenerateQuestionSSE(AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+        // 获取参数
+        Long appId = aiGenerateQuestionRequest.getAppId();
+        int questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+        int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        // 封装 Prompt
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        // 建立 SSE 连接对象，0 表示不超时
+        SseEmitter emitter = new SseEmitter(0L);
+        // AI 生成，sse 流式返回
+        Flowable<ModelData> modelDataFlowable = aiManager.doStreamRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
+        // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
+        AtomicInteger flag = new AtomicInteger(0);
+        // 拼接完整题目
+        StringBuilder contentBuilder = new StringBuilder();
+        // 异步线程池执行
+        modelDataFlowable
+                .observeOn(Schedulers.io())
+                .map(chunk -> chunk.getChoices().get(0).getDelta().getContent())
+                .map(message -> message.replaceAll("\\s", ""))
+                .filter(StrUtil::isNotBlank)
+                .flatMap(message -> {
+                    List<Character> charList = new ArrayList<>();  // 将字符串转换为 List<Character>
+                    for (char c : message.toCharArray()) {
+                        charList.add(c);
+                    }
+                    return Flowable.fromIterable(charList);
+                })
+                .doOnNext(c -> {
+                    // 识别第一个 [ 表示开始 AI 传输 json 数据，打开 flag 开始拼接 json 数组
+                    if (c == '{') {
+                        flag.addAndGet(1);
+                    }
+                    if (flag.get() > 0) {
+                        contentBuilder.append(c);
+                    }
+                    if (c == '}') {
+                        flag.addAndGet(-1);
+                        if (flag.get() == 0) {
+                            // 累积单套题目满足 json 格式后，sse 推送至前端
+                            // sse 需要压缩成当行 json，sse 无法识别换行
+                            emitter.send(JSONUtil.toJsonStr(contentBuilder.toString()));
+                            // 清空 StringBuilder
+                            contentBuilder.setLength(0);
+                        }
+                    }
+                }).doOnError(e -> log.error("sse error", e))
+                .doOnComplete(emitter::complete).subscribe();
+        return emitter;
     }
 }
